@@ -48,6 +48,9 @@
     ".wrangler",
     ".sites-runtime",
     "outputs",
-    "work"
+    "work",
+    "scripts",
+    "worker",
+    "vite.config.ts"
   ]
 }
