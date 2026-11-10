@@ -8,15 +8,17 @@
   "scripts": {
     "install:ci": "node scripts/install-ci.mjs",
     "dev": "next dev",
-    "build": "next build --webpack",
+    "build": "node scripts/setup-database.mjs && next build --webpack",
     "start": "next start",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
-    "build:sites": "node scripts/run-framework.mjs build"
+    "build:sites": "node scripts/run-framework.mjs build",
+    "db:setup": "node scripts/setup-database.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@hookform/resolvers": "^5.7.1",
+    "@neondatabase/serverless": "1.2.0",
     "@shadcn/react": "^0.3.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
