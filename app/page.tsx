@@ -1,0 +1,71 @@
+'use client';
+
+import { useState, useEffect, useRef, type FormEvent } from 'react';
+
+const Arrow = () => <span aria-hidden="true">↗</span>;
+const faqs = [
+  ['When can I get my capsoul?', 'We’re developing our first collection. Join the launch list for product updates and first access when orders open. Pricing and a launch date are still to come.'],
+  ['What’s inside?', 'The current design has seven days of fixed AM and PM compartments inside one protective hinged case. Designed to fit 10–20 pills for a mix of medications and supplements, with capacity depending on pill size. Final dimensions will be shared before launch.'],
+  ['Will all my meds fit?', 'Capsoul is designed to fit 10–20 pills for a variety of medications and supplements. Capacity depends on pill size. We’ll publish tested compartment dimensions and capacity examples before orders open so you can check your fit.'],
+  ['What do you mean by no plastic and no PFAS?', 'Our design brief calls for stainless steel pill compartments, no plastic, and no intentionally added PFAS. The Sage Clutch concept includes a silicone outer jacket; both concepts include silicone seals. Final materials and supplier verification are still in progress.'],
+  ['How are the two finishes different?', 'The Sage Clutch pairs a soft sage silicone exterior with stainless steel inside. Bare Steel keeps the brushed stainless steel exterior on show. Both are envisioned around the same seven-day AM/PM core.'],
+];
+
+export default function Home() {
+  const [finish, setFinish] = useState<'sage'|'steel'>('sage');
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle'|'loading'|'success'|'error'>('idle');
+  const [error, setError] = useState('');
+  const [menu, setMenu] = useState(false);
+  const [privacy, setPrivacy] = useState(false);
+  const modalRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!privacy) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    function keydown(e: KeyboardEvent) {
+      if(e.key==='Escape') setPrivacy(false);
+      if(e.key==='Tab') {
+        const controls=modalRef.current?.querySelectorAll<HTMLElement>('button, input, a[href]');
+        if(!controls?.length) return;
+        const first=controls[0],last=controls[controls.length-1];
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+      }
+    }
+    document.addEventListener('keydown',keydown);
+    return()=>{document.body.style.overflow=oldOverflow;document.removeEventListener('keydown',keydown);previous?.focus();};
+  },[privacy]);
+  async function signup(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault(); setStatus('loading'); setError('');
+    const data = new FormData(e.currentTarget);
+    try {
+      const response = await fetch('/api/waitlist', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, finish, consent:true, website:data.get('website')})});
+      if (!response.ok) throw new Error('We couldn’t save your email. Please try again in a moment.');
+      setStatus('success');
+    } catch(e) {setStatus('error');setError(e instanceof Error ? e.message : 'Please try again.');}
+  }
+  function choose(value: 'sage'|'steel') {setFinish(value);setStatus('idle');}
+  return <>
+    <div className="announcement"><span className="live-dot"/> A new kind of daily ritual. <a href="#join">Meet your next everyday essential <span aria-hidden="true">→</span></a></div>
+    <header className="header"><a className="wordmark" href="#" aria-label="capsoul home">capsoul<span className="brand-dot">✳</span></a><nav aria-label="Main navigation" className={menu?'nav open':'nav'}><a onClick={()=>setMenu(false)} href="#collection">The collection</a><a onClick={()=>setMenu(false)} href="#philosophy">Our philosophy</a><a onClick={()=>setMenu(false)} href="#questions">Good questions</a></nav><a className="button small" href="#join">Get first access <Arrow/></a><button className="menu-button" aria-label="Toggle navigation" aria-expanded={menu} onClick={()=>setMenu(!menu)}>{menu?'Close':'Menu'}</button></header>
+    <main>
+      <section className="hero" aria-labelledby="hero-title">
+        <div className="hero-copy"><p className="eyebrow"><span className="tiny-spark">✳</span> Wellness, with a little more soul.</p><h1 id="hero-title">A plastic-free space for your <em>meds and supplements.</em></h1><p className="intro">Meet the pill case you’ll want to leave out.<br className="desktop"/> Thoughtfully designed in stainless steel, for the things you take to take care of you.</p><a className="button" href="#collection">Find your daily companion <Arrow/></a><p className="hero-note"><span className="live-dot"/> In the making. Made for your everyday.</p></div>
+        <div className="hero-visual"><img src="/images/hero.png" alt="Capsoul sage concept: an open stainless steel weekly pill organizer behind a closed sage case" fetchPriority="high"/><div className="image-stamp">MADE OF<br/>STAINLESS<br/>STEEL<span>✳</span></div><span className="concept">Concept rendering</span></div>
+      </section>
+      <div className="principles" aria-label="Our design priorities"><span className="principles-label">THE DESIGN BRIEF</span><span>No plastic.</span><i>✳</i><span>No intentionally added PFAS.</span><i>✳</i><span>Stainless steel.</span><i>✳</i><span>Room for your routine.</span></div>
+      <section className="manifesto section-pad" id="philosophy"><p className="eyebrow">LESS CHORE. MORE CARE.</p><h2>Taking care of yourself<br/>deserves <span className="serif">something beautiful.</span></h2><div className="manifesto-bottom"><span className="big-spark" aria-hidden="true">✳</span><p>The daily meds. The vitamins. The little things that help you feel like you. We believe their home should feel just as considered as the rest of your life.</p><p>So we’re creating capsoul. A durable stainless steel pill case that brings a little intention — and a lot of good design — to your everyday.</p></div></section>
+      <section className="collection section-pad" id="collection"><div className="section-heading"><div><p className="eyebrow">THE FIRST COLLECTION</p><h2>Two expressions.<br/>Bare Steel &amp; Sage</h2></div><p>A soft touch or a steel statement.<br/>Find the finish that feels like you.</p></div>
+      <div className="product"><div className={'product-image '+finish}><div className="product-image-top"><span>IN DEVELOPMENT</span></div><div className={'reference-crop '+finish}><img src="/images/concepts.png" alt={finish==='sage'?'Sage Clutch concept with soft sage exterior and metal AM/PM compartments':'Bare Steel concept with brushed steel exterior and metal AM/PM compartments'}/></div><span className="product-image-bottom">YOUR WEEK. BEAUTIFULLY CONTAINED.</span><span className="concept">Concept rendering</span></div>
+      <div className="product-info"><div className="finish-picker" role="group" aria-label="Choose your finish"><button aria-pressed={finish==='sage'} className={finish==='sage'?'active':''} onClick={()=>choose('sage')}><span className="swatch sage"/>Sage Clutch</button><button aria-pressed={finish==='steel'} className={finish==='steel'?'active':''} onClick={()=>choose('steel')}><span className="swatch steel"/>Bare Steel</button></div><p className="eyebrow">{finish==='sage'?'SOFT ON THE OUTSIDE. STRONG AT THE CORE.':'EVERYDAY CARE. UNDRESSED.'}</p><h3>{finish==='sage'?'The Sage Clutch':'Bare Steel'}</h3><p className="product-description">{finish==='sage'?'A quiet pop of color. A soft silicone jacket. A stainless steel core. For a daily ritual that feels as good as it looks.':'Brushed stainless steel, in its element. A clean silhouette and an understated engraved wordmark. For the beautifully straightforward.'}</p><dl className="specs"><div><dt>Your week, sorted</dt><dd>7 days · AM + PM</dd></div><div><dt>Room for your routine</dt><dd>Designed to fit 10–20 pills*</dd></div><div><dt>Designed to stay</dt><dd>Durable stainless steel core</dd></div></dl><a className="button full" href="#join">I’m a {finish==='sage'?'sage':'steel'} person <Arrow/></a><p className="fine-print">*Capacity varies by pill size. Final details and pricing to come.</p></div></div></section>
+      <section className="ritual section-pad"><div className="ritual-title"><p className="eyebrow">A SMALL SHIFT IN YOUR EVERYDAY.</p><h2>Make room<br/>for <span className="serif">feeling good.</span></h2></div><div className="ritual-steps"><article><h3>A place for your routine.</h3><p>Seven days. Morning and evening. A thoughtful home for the things you take each day.</p></article><article><h3>Care, in plain sight.</h3><p>On the nightstand. In your travel bag. By your morning coffee. An everyday object you can feel good about.</p></article></div></section>
+      <section className="materials section-pad"><div className="materials-heading"><p className="eyebrow">THOUGHTFUL TO THE CORE</p><h2>Good design.<br/>No shortcuts.</h2></div><div className="materials-details"><article><div><h3>Steel with staying power.</h3><p>Durable stainless steel is at the heart of the design. An everyday essential, made with the long view in mind.</p></div></article><article><div><h3>Intentional materials.</h3><p>No plastic. No intentionally added PFAS. That’s our design brief, with final materials and supplier verification ahead.</p></div></article><article><div><h3>Space for all your pills.</h3><p>Designed to fit 10–20 pills for your mix of meds and supplements. Pill sizes vary, so we’ll share tested dimensions before launch to help you find your fit.</p></div></article><p className="materials-note">A note on materials: our concepts include silicone seals, plus a silicone jacket on Sage Clutch. Designs and specifications may evolve as we develop the collection.</p></div></section>
+      <section className="faq section-pad" id="questions"><div><p className="eyebrow">A LITTLE CLARITY</p><h2>Good questions.</h2><p>Because the details matter.</p></div><div className="faq-list">{faqs.map(([question,answer])=><details key={question}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></section>
+      <section className="join section-pad" id="join"><div><p className="eyebrow"><span className="live-dot"/> SOMETHING GOOD IS IN THE MAKING</p><h2>Your ritual.<br/>Reimagined.</h2><p>Be first to meet capsoul.<br/>Product news, launch updates, and first access.</p></div><div className="signup"><span className="signup-spark" aria-hidden="true">✳</span>{status==='success'?<div className="success" role="status"><h3>You’re on the list.</h3><p>Here’s to a little more soul in your everyday. Your interest in {finish==='sage'?'Sage Clutch':'Bare Steel'} is saved. We’ll be in touch with launch news.</p><button className="text-button" onClick={()=>{setEmail('');setStatus('idle')}}>Add another email <span aria-hidden="true">→</span></button></div>:<form onSubmit={signup}><label htmlFor="email">Your email address</label><div className="email-row"><input id="email" name="email" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" required maxLength={254} autoComplete="email"/><button type="submit" disabled={status==='loading'} aria-label="Join the launch list">{status==='loading'?'Saving…':<Arrow/>}</button></div><div className="interest"><label htmlFor="interest">I have my eye on</label><select id="interest" value={finish} onChange={e=>choose(e.target.value as 'sage'|'steel')}><option value="sage">The Sage Clutch</option><option value="steel">Bare Steel</option></select></div><input className="honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true"/><p className="signup-note">By joining, you agree to receive capsoul product and launch updates. You can ask to leave the list at any time.</p><button type="button" className="text-button privacy-link" onClick={()=>setPrivacy(true)}>How we use your email</button>{status==='error'&&<p className="form-error" role="alert">{error}</p>}</form>}</div></section>
+    </main>
+    <footer><div className="footer-top"><a href="#" className="wordmark">capsoul<span className="brand-dot">✳</span></a><span>A plastic-free space for your meds and supplements.</span><a href="#join">Get first access <Arrow/></a></div><div className="footer-bottom"><span>© {new Date().getFullYear()} capsoul</span><span>Designed for the care you give yourself.</span><button onClick={()=>setPrivacy(true)}>Privacy</button></div></footer>
+    {privacy&&<div className="modal-backdrop" onClick={()=>setPrivacy(false)}><section ref={modalRef} className="privacy-modal" role="dialog" aria-modal="true" aria-labelledby="privacy-title" onClick={e=>e.stopPropagation()}><button className="modal-close" onClick={()=>setPrivacy(false)} autoFocus>Close ×</button><p className="eyebrow">YOUR INFORMATION</p><h2 id="privacy-title">Just the essentials.</h2><p>This form stores your email address, preferred finish, and signup date for capsoul’s product and launch updates. It does not ask for information about your medications or health.</p><p>No advertising or analytics trackers are included on this site. Your signup is stored in this site’s database. No email is sent automatically when you join.</p><p>To remove an entry, use the form below with the same email address. The entry will be deleted from the launch list.</p><form onSubmit={async e=>{e.preventDefault(); const form=e.currentTarget;const input=new FormData(form).get('removeEmail');const result=await fetch('/api/waitlist',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:input})}); const output=form.querySelector('output');if(output)output.textContent=result.ok?'Any matching entry has been removed.':'Could not remove your entry. Please try again.';}}><label htmlFor="remove-email">Email to remove</label><input id="remove-email" name="removeEmail" type="email" placeholder="you@example.com" required/><button className="button small" type="submit">Remove from list</button><output aria-live="polite"/></form></section></div>}
+  </>;
+}
